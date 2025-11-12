@@ -1,0 +1,32 @@
+<= 11:
+
+
+C++ 14:
+generic lambdas
+auto (return type deduction)
+make_unique
+
+17:
+Structured Bindings
+optional, variant, any
+filesystem
+
+20:
+concepts
+// TODO: Look more at coroutines, they are very interesting. Compile-time transform to state machine.
+// Incredibly performant and ergonomic to write async code top-down
+coroutines
+ranges
+format
+modules
+spaceship operator
+
+23:
+print
+More constexpr across library
+
+26:
+hive
+inplace_vector
+
+
