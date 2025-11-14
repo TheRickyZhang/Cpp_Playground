@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-namespace getcracked {
+namespace ricky {
 
 template <typename T> struct is_small_trait { static inline constexpr bool value=false; };
 template <> struct is_small_trait<int>      { static inline constexpr bool value=true; };
@@ -62,7 +62,7 @@ public:
     const std::type_info& type_info() const noexcept { return type ? *type : typeid(void); }
 };
 
-static_assert(sizeof(any) <= 80, "getcracked::any must be <= 80 bytes");
+static_assert(sizeof(any) <= 80, "ricky::any must be <= 80 bytes");
 
-} // namespace getcracked
+} // namespace ricky
 

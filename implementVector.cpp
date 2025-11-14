@@ -185,7 +185,7 @@ int main() {
 
 // // -------- Level 2: new[]/delete[] (requires DefaultConstructible,
 // // Move/CopyAssignable)
-// namespace getcracked {
+// namespace ricky {
 // template <typename T> class vector {
 // public:
 //   vector() { expand(1); }
@@ -247,7 +247,7 @@ int main() {
 //   T *a = nullptr;
 //   int sz = 0, cap = 0;
 // };
-// } // namespace getcracked
+// } // namespace ricky
 //
 // // -------- Level 3: raw storage + placement new (no DefaultConstructible
 // // requirement)

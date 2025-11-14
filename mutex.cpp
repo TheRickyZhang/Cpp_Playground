@@ -6,6 +6,7 @@
 // You do NOT need to add your own includes here.                         //
 // /////////////////////////////////////////////////////////////////////////
 #include <bits/stdc++.h>
+using namespace std;
 
 enum LOCK_STATE {
   unlocked = 0,
@@ -17,19 +18,13 @@ class Mutex
 public:
     void lock()
     {
-        auto expected = LOCK_STATE::unlocked;
-        // Note that compare exchange weak must take the first value by reference since it writes into it if value is not what is expected (returns false)
-        if(state.compare_exchange_weak(expected, LOCK_STATE::locked)) {
-          return;
+      // Note how we can do this concisely by doing a short-circuit on load == unlocked, and then just invoking exchange
+      for(int i = 0; (state.load(std::memory_order_relaxed) == LOCK_STATE::locked) ||
+        state.exchange(LOCK_STATE::locked, std::memory_order_acquire); i++) {
+        if(i != 0 && i % 8 == 0) {
+          this_thread::yield();
         }
-        // Hm a bit fragile but arbitrary max wait time until give up
-        for(int i = 0; i < 10000; i++) {
-          expected = LOCK_STATE::unlocked;
-          if(state.compare_exchange_weak(expected, LOCK_STATE::locked)) {
-            return;
-          }
-          wait();
-        }
+      }
     }
 
     void unlock()
@@ -38,9 +33,4 @@ public:
     }
 private:
     std::atomic<LOCK_STATE> state = std::atomic<LOCK_STATE>(LOCK_STATE::unlocked);
-    static void wait() {
-        for(int i = 0; i < 100000; i++) {
-        }
-        std::this_thread::yield();
-    } 
 };

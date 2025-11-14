@@ -90,7 +90,8 @@ private:
     if(cb) cb->count.fetch_add(1, std::memory_order_relaxed);
   }
 
-  static void decrement(control_block* cb, T* p) {
+  // Be careful - you need pointer references here to assign the actual address to nullptr
+  static void decrement(control_block*& cb, T*& p) {
     if(!cb) return;
     // We want to guarantee we see all writes beforehand for accurate destruction
     // The default sequential consistency is fine for this (slowest / entirely sequential)
