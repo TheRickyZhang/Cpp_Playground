@@ -1,19 +1,6 @@
-Klaus Iglberger: C++ software design
+*Klaus Iglberger: C++ software design*
 
--C++ Concepts are the static equivalent of base classes - just specifying certain requirements that must be fulfilled
-
-Acronyms:
-ADL: Argument dependent lookup (doing using std::begin in scope of function, for instance, to look in std scope after trying specific scope)
-RAII: Resource Acquisition is Initialization: very intuitive, acquiring/releasing resources should match with the lifetime
-KISS: Keep it simple, stupid.
-
-prefer using:
-  using std::swap;
-  swap(x, y);
-over:
-  std::swap(x, y);
-
-Because the former allows compiler to choose better, type-specific swap implementation.
+C++ Concepts are the static equivalent of base classes - just specifying certain requirements that must be fulfilled
 
 A design pattern is a proven, named solution which expresses a specific intent.
 Note that this is distinct from an implementation pattern, such as std::make_unique, which does not allow for decoupling or extending
@@ -23,23 +10,48 @@ Dependency injection: modify existing code and inject it from the outside, ex in
 Dynamic Polymorphism makes a decision: you can either add types easily, or operations easily.
 OOP = easy to add types, procedural = easy to add operations
 
--- Design Patterns -- 
+= Design Patterns
+Passing in something: Strategy, Command
+Relating components : Bridge,   Adapter
+Prevent repetition  : Visitor,  CRTP,  Decorator
+The GOAT?           : Type Erasure, External Polymorphism
+
+Various             : Observer, Clone, Singleton
+More Obscure:
+Memento: Have state snapshots to allow rollback without exposing public members
+Chain of Responsibility: Pass requests along a sort of linked list until you get to a node that can handle
+Facade: Hide complexity, while still allowing access to internals
+
+Flyweight: Split state into intrinsic (shared memory) and extrinsic (per-instance)
+Composite: Single and group things treated the same (ex a group of people in game = single person)
+Proxy: Provide a friendly placeholder / interface that goes through real object through proxy
+Abstract Factory: When you have related things, and you want to be able to switch them all at once quickly, so package together.
+Null: Create child class that does nothing instead of a null object
+Builder: For creating complex object, enforce invariants, 
+Template: Every instance created the same way, but subclasses can customize a step
+
+In Battlebeyz:
+Command: Stack of GameStates
+Bridge: Representation of BeybladeBody holding a BeybladeLayer, which could be a SingleLayer, GodLayer, ChoZLayer, etc.
+Observer: Once the user activates a signature move, then it calls the correct functions to all relevant beys
+Facade: Provide simple GameEngine methods like loadScreen(), changeState()
+At SMBC:
+Builder: Basically immutable objects
 
 = Strategy
 Have interchangeable algorithms, allowing it customizable from the outside; think like passing lambdas.
-- Easy addition of new derived objects (preserves strength of OOP)
+- Easy addition of new derived objWhat's the difference between a bridge design patterna nd an adapter?ects (preserves strength of OOP)
 - Examples: passing in lambda to accumulate, allocator to vector
 - Can end up with lots of classes and pointer indirection
 - So better when smaller number of implementation details
 - Can improve performance using templates, just lose ability to specify at runtime
 
 = Visitor (Cyclic Visitor)
-extract variation points to a separate class implementing visit()
-_- Easy addition of new operations._
-- Note it is a workaround for OOP weakness of adding new operations.
+- Instead of creating functions for each class, make them all accept a visitor class. So you only need to change the visitor class to add new behavior
+- Double dispatch: virtual picks the element type, overload picks visitor function based on that type
+_- Easy addition of new operations by separating behavior to different class (but is workaround for OOP weakness)_
 - Not very flexible, violates DRY if very similar functionality. Assumes closed set of types
 - Subjectively hard to understand/maintain
-- Quite slow, requires double dispatch (virtual functions)
 
 class Square : public Shape {
   void accept(ShapeVisitor& v) override {
@@ -87,7 +99,8 @@ notify all listeners when something changes
 - Using std::function only works well with pull observers
 
 = CRTP (Curiously Recurring Template Pattern)
-- Create a base class abstraction, but NO runtime relationship, all compile-time.
+- No common base class; everything is its own template (all compile-time)
+- Note: *Mixin* classes are base classes just for the purposes of injecting specific behavior
 - A bit unintuitive and circular, but you can define:
 ```
 template<typename T>
@@ -107,8 +120,9 @@ decltype(auto) function(params...) { ... }
 - Everything becomes a template, not flexible
 
 = Bridge
+Class instances hold reference to implementation and delegate to it
+- Structural design pattern; focuses on physical dependencies of abstraction and implementation
 - As opposed to usual definition, decouple things by constructing a bridge to separate them
-- A structural design pattern, as focuses on physical dependencies
 - For instance, if we store SingleLayer in BeybladeBody, instead of directly storing a unique_ptr<SingleLayer>, we instead create abstract base class Layer, and SingleLayer inherit from Layer, storing a Layer in BeybladeBody.
 - Compilation Firewall: changes to implementation details should not cause recompilation to higher classes
 - Want to use pimpl = pointer implementation (condense member variables into one std::unique_ptr(Pimpl))
@@ -167,7 +181,8 @@ Example: see ./typeErasureShapeImplementation.cpp
 
 = Decorator
 When you want to flexibly combine multiple different strategies to apply to something (ex pricing logic)
-- Have multiple things inheriting from DecoratedItem. Then, in construction, pass combinatino by nested constructors, like:
+- Indicated by is-a and has-a, since a decorator parent class will modify instance in some way
+- Can have multiple things inheriting from DecoratedItem. Then, in construction, pass combination by nested constructors, like:
 ```
 std::unique_ptr<Item> item2(
 std::make_unique<Taxed>( 0.19,
