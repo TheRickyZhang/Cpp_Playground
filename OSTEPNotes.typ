@@ -109,5 +109,3 @@ Task Parallelism (different tasks) vs Data Parallelism (same task, different dat
 Beware of partial state that can happen when exception during lock_guard
 Beware of providing ownership of supposed locked variables, as they can be referenced after the lock guard finishes
 Must guard against spurious wakes, when thread unexpectedly wakes up (allowed by C++ standard since implemented with OS/futex) even if the condition variable isn't met.
-
-
