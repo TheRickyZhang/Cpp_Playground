@@ -1,335 +1,172 @@
 #include <bits/stdc++.h>
-#include <memory> 
-#include <stdexcept>
+#include <memory>
 
-namespace ricky {
+/*
+Don't forget to use ::operator new and ::operator delete
+Don't forget to cast from void* to T*
+Use copy and swap for copy assignment
+Destroy on pop back
 
-template <typename T> class vector1 {
-  T *a_;
-  size_t n_;
-  size_t mx_;
+template<typename T>
+class vector {
+  T* a;
+  int n; // Should be size_t
+  int cap;
 
-  void setToSize(size_t sz) {
-    T *a = new T[sz];
-    for (size_t i = 0; i < n_; i++) {
-      a[i] = a_[i];
-    }
-    delete[] a_;
-    a_ = a;
-    mx_ = sz;
+  void resize(int m) {
+    copy using operator new, construct_at with move
+    delete old using destroy_at and delete
+    reassign variables
   }
-  void expandSize() { setToSize(mx_ == 0 ? 1 : 2 * mx_); }
+  void expandSize() {
+    wrapper over resize
+  }
 
 public:
-  vector1() : a_(nullptr), n_(0), mx_(0) {}
-  vector1(int n) : n_(n), mx_(n) { a_ = new T[n]; }
-  ~vector1() { delete[] a_; }
+  constructors
+  destructor
+  copiers, movers (don't forget to properly destroy before setting)
 
-  void push_back(T x) {
-    if (n_ == mx_) {
-      expandSize();
+  push_back() (multiple args)
+  getSize()
+  at()
+  getCapacity()
+}
+*/
+
+template<typename T>
+class vector {
+  T* a = nullptr;
+  int n = 0;
+  int cap = 0;
+  
+  void resize(int m)  {
+    T* b = static_cast<T*>(::operator new(m * sizeof(T)));
+    int cnt = std::min(n, m);
+    for(int i = 0; i < cnt; i++) {
+      std::construct_at(b + i, a[i]);
     }
-    a_[n_++] = x;
-  }
-  const T at(size_t i) {
-    if (i >= n_)
-      throw std::runtime_error("out of bounds");
-    return a_[i];
-  }
-  size_t getSize() { return n_; }
-  size_t getCapacity() { return mx_; }
-  void shrink_to_fit() { setToSize(n_); }
-  void pop_back() {
-    if (n_ == 0)
-      throw std::runtime_error("nothing to pop back");
-    n_--;
+    cleanup();
+    a = b;
+    n = cnt;
+    cap = m;
   }
 
-  void print() {
-    std::cout << "size: " << n_ << ", capacity: " << mx_ << "\n";
-    std::cout << "array: ";
-    for (size_t i = 0; i < n_; i++) {
-      std::cout << a_[i] << " ";
+  void increaseSize() {
+    resize(n == 0 ? 1 : 2 * n);
+  }
+
+  void cleanup() {
+    for(int i = 0; i < n; i++) {
+      std::destroy_at(a + i);
     }
-    std::cout << "\n";
+    ::operator delete(a);
   }
-};
-
-template <typename T> class vector2 {
-  T *a_;
-  size_t n_;
-  size_t mx_;
-
-  void setToSize(size_t sz) {
-    T *a = static_cast<T *>(::operator new(sizeof(T) * sz));
-    size_t i = 0;
-    for (; i < n_; ++i){
-      std::construct_at(a + i, std::move(a_[i]));
-    }
-    for (size_t j = 0; j < n_; ++j) {
-      std::destroy_at(a_ + j);
-    }
-    ::operator delete(a_);
-    a_ = a;
-    mx_ = sz;
-  }
-
-  void expandSize() { setToSize(mx_ == 0 ? 1 : 2 * mx_); }
 
 public:
-  vector2() : a_(nullptr), n_(0), mx_(0) {}
-
-  vector2(int n) : a_(nullptr), n_(0), mx_(0) {
-    a_ = static_cast<T *>(::operator new(sizeof(T) * static_cast<size_t>(n)));
-    for (; n_ < static_cast<size_t>(n); ++n_) {
-      std::construct_at(a_ + n_);
+  vector() = default;
+  vector(int n, const T& x = T()) : n(n), cap(n) {
+    a = static_cast<T*>(::operator new(n * sizeof(T)));
+    for(int i = 0; i < n; i++) {
+      std::construct_at(a + i, x);
     }
-    mx_ = static_cast<size_t>(n);
+  }
+  ~vector() {
+    cleanup();
   }
 
-  ~vector2() {
-    for (size_t i = 0; i < n_; ++i) {
-      std::destroy_at(a_ + i);
+  vector(const vector& v) : n(v.n), cap(v.cap) {
+    a = static_cast<T*>(::operator new(cap * sizeof(T)));
+    for(int i = 0; i < n; i++) {
+      std::construct_at(a + i, v.a[i]);
     }
-    ::operator delete(a_);
   }
-
-  vector2(const vector2 &) = delete;
-  vector2 &operator=(const vector2 &) = delete;
-
-  vector2(vector2 &&o) noexcept : a_(o.a_), n_(o.n_), mx_(o.mx_) {
-    o.a_ = nullptr;
-    o.n_ = o.mx_ = 0;
-  }
-  vector2 &operator=(vector2 &&o) noexcept {
-    if (this != &o) {
-      for (size_t i = 0; i < n_; ++i) {
-        std::destroy_at(a_ + i);
-      }
-      ::operator delete(a_);
-      a_ = o.a_;
-      n_ = o.n_;
-      mx_ = o.mx_;
-      o.a_ = nullptr;
-      o.n_ = o.mx_ = 0;
+  vector& operator=(const vector& v) {
+    if(this != &v) {
+      vector temp(v);
+      swap(temp);
     }
     return *this;
   }
 
-  // void push_back(const T &x) {
-  //   if (n_ == mx_) expandSize();
-  //   std::construct_at(a_ + n_, x);
-  //   ++n_;
-  // }
-  // void push_back(T &&x) {
-  //   if (n_ == mx_) expandSize();
-  //   std::construct_at(a_ + n_, std::move(x));
-  //   ++n_;
-  // }
-  void push_back(T x) {
-    if (n_ == mx_) {
-      expandSize();
+  vector(vector&& v) : a(v.a), n(v.n), cap(v.cap) {
+    v.a = nullptr;
+    v.n = 0;
+    v.cap = 0;
+  }
+  vector& operator=(vector&& v) noexcept {
+    if(this != &v) {
+      cleanup();
+      a = v.a; n  = v.n; cap = v.cap;
+      v.a = nullptr; v.n = v.cap = 0;
     }
-    a_[n_++] = x;
+    return *this;
+  }
+  void swap(vector& other) noexcept {
+    std::swap(a, other.a);
+    std::swap(n, other.n);
+    std::swap(cap, other.cap);
   }
 
-  // Also const variant
-  T &at(size_t i) {
-    if (i >= n_) throw std::runtime_error("out of bounds");
-    return a_[i];
+  T& at(size_t i) {
+    assert(i >= 0 && i < n);
+    return a[i];
   }
 
-  size_t getSize() { return n_; }
-  size_t getCapacity() { return mx_; }
-  void shrink_to_fit() { setToSize(n_); }
-
-  void pop_back() {
-    if (n_ == 0) throw std::runtime_error("nothing to pop back");
-    --n_;
-    std::destroy_at(a_ + n_);
+  void push_back(const T& x) {
+    if(n == cap) increaseSize();
+    std::construct_at(a + n, x);
+    n++;
   }
 
-  void print() {
-    std::cout << "size: " << n_ << ", capacity: " << mx_ << "\n";
-    std::cout << "array: ";
-    for (size_t i = 0; i < n_; i++) std::cout << a_[i] << " ";
-    std::cout << "\n";
+  template<class... Args>
+  T& emplace_back(Args&&... args) {
+    if(n==cap) increaseSize();
+    std::construct_at(a+n, std::forward<Args>(args)...);
+    return a[n++];
+  }
+
+  T pop_back() {
+    assert(n != 0);
+    T temp = std::move(a[n-1]);
+    std::destroy_at(a + (n-1));
+    n--;
+    return temp;
+  }
+
+  size_t size() {
+    return n;
+  }
+  size_t capacity() {
+    return cap;
+  }
+  void shrink_to_fit() {
+    resize(n);
   }
 };
-} // namespace ricky
 
-struct complexObject {
-  int *a;
-  std::string b;
-  complexObject(int x, std::string y) {
-    a = new int(x);
-    b = y;
-  }
-  friend std::ostream &operator<<(std::ostream &os, const complexObject &o) {
-    return os << *o.a << ", " << o.b;
-  }
-};
 
-int main() {
-  ricky::vector2<complexObject> v;
-  v.print();
-  v.push_back(complexObject(1, "a"));
-  v.push_back(complexObject(1, "b"));
-  v.print();
-  v.pop_back();
-  v.push_back(complexObject(2, "a"));
-  complexObject c(2, "c");
-  v.push_back(c);
-  v.print();
-}
-
-// // -------- Level 2: new[]/delete[] (requires DefaultConstructible,
-// // Move/CopyAssignable)
-// namespace ricky {
-// template <typename T> class vector {
-// public:
-//   vector() { expand(1); }
-//   ~vector() {
-//     for (int i = 0; i < sz; i++) {
-//       (a + i)->~T();
-//     }
-//     ::operator delete(a);
+// struct complexObject {
+//   int *a;
+//   std::string b;
+//   complexObject(int x, std::string y) {
+//     a = new int(x);
+//     b = y;
 //   }
-//   void push_back(const T &x) {
-//     if (sz == cap)
-//       expandToCapacity(3 * cap);
-//     ::new ((void *)(a + sz)) T(x);
-//     sz++;
+//   friend std::ostream &operator<<(std::ostream &os, const complexObject &o) {
+//     return os << *o.a << ", " << o.b;
 //   }
-//   void emplace_back(T &&x) {
-//     if (sz == cap)
-//       expandToCapacity(3 * cap);
-//     ::new ((void *)(a + sz)) T(std::move(x));
-//     sz++;
-//   }
-//   const T &at(std::size_t i) const {
-//     if (i >= sz)
-//       throw std::runtime_error("Out of bounds");
-//     return a[i];
-//   }
-//   std::size_t get_size() const { return sz; }
-//   std::size_t get_capacity() const { return cap; }
-//   void shrink_to_fit() {
-//     if (cap != sz) {
-//       expandToCapacity(sz);
-//     }
-//   }
-//   void pop_back() {
-//     if (sz == 0)
-//       throw std::runtime_error("Cannot pop");
-//     (a + sz - 1)->~T();
-//     sz--;
-//   }
-//
-// private:
-//   void expandToCapacity(int n) {
-//     // Populate new data
-//     T *na = static_cast<T *>(::operator new(sizeof(T) * n));
-//     for (int i = 0; i < sz; i++) {
-//       ::new ((void *)(na + i)) T(std::move(a[i]));
-//     }
-//
-//     // Destroy, deallocate old data
-//     for (int i = 0; i < sz; i++) {
-//       (a + i)->~T();
-//     }
-//     ::operator delete(a);
-//
-//     // Update vals
-//     a = na;
-//     cap = n;
-//   }
-//   T *a = nullptr;
-//   int sz = 0, cap = 0;
 // };
-// } // namespace ricky
 //
-// // -------- Level 3: raw storage + placement new (no DefaultConstructible
-// // requirement)
-// namespace l3 {
-// template <typename T> class vector {
-// public:
-//   vector() = default;
-//   ~vector() {
-//     destroy_range(data_, sz_);
-//     ::operator delete(data_);
-//   }
-//
-//   void push_back(T element) {
-//     if (sz_ == cap_)
-//       grow_raw(cap_ ? cap_ * 2 : 1);
-//     ::new (data_ + sz_) T(std::move(element)); // construct one
-//     ++sz_;
-//   }
-//   const T &at(std::size_t i) const {
-//     if (i >= sz_)
-//       throw std::out_of_range("vector::at");
-//     return data_[i];
-//   }
-//   std::size_t get_size() const { return sz_; }
-//   std::size_t get_capacity() const { return cap_; }
-//
-//   void shrink_to_fit() {
-//     if (cap_ == sz_)
-//       return;
-//     if (sz_ == 0) {
-//       ::operator delete(data_);
-//       data_ = nullptr;
-//       cap_ = 0;
-//       return;
-//     }
-//     T *nd = static_cast<T *>(::operator new(sizeof(T) * sz_));
-//     std::size_t built = 0;
-//     try {
-//       for (; built < sz_; ++built)
-//         ::new (nd + built) T(std::move_if_noexcept(data_[built]));
-//     } catch (...) {
-//       destroy_range(nd, built);
-//       ::operator delete(nd);
-//       throw;
-//     }
-//     destroy_range(data_, sz_);
-//     ::operator delete(data_);
-//     data_ = nd;
-//     cap_ = sz_;
-//   }
-//   void pop_back() {
-//     if (!sz_)
-//       return;
-//     --sz_;
-//     (data_ + sz_)->~T(); // destroy one
-//   }
-//
-// private:
-//   static void destroy_range(T *p, std::size_t n) noexcept {
-//     for (std::size_t i = 0; i < n; ++i)
-//       (p + i)->~T();
-//   }
-//   void grow_raw(std::size_t nc) {
-//     T *nd =
-//         static_cast<T *>(::operator new(sizeof(T) * nc)); // raw,
-//         uninitialized
-//     std::size_t built = 0;
-//     try {
-//       for (; built < sz_; ++built)
-//         ::new (nd + built) T(std::move_if_noexcept(data_[built]));
-//     } catch (...) {
-//       destroy_range(nd, built);
-//       ::operator delete(nd);
-//       throw;
-//     }
-//     destroy_range(data_, sz_);
-//     ::operator delete(data_);
-//     data_ = nd;
-//     cap_ = nc;
-//   }
-//
-//   T *data_ = nullptr;
-//   std::size_t sz_ = 0, cap_ = 0;
-// };
-// } // namespace l3
+// int main() {
+//   ricky::vector<complexObject> v;
+//   v.print();
+//   v.push_back(complexObject(1, "a"));
+//   v.push_back(complexObject(1, "b"));
+//   v.print();
+//   v.pop_back();
+//   v.push_back(complexObject(2, "a"));
+//   complexObject c(2, "c");
+//   v.push_back(c);
+//   v.print();
+// }

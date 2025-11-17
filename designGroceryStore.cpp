@@ -6,27 +6,24 @@ using namespace std;
  *
  * Item management: keep track of prices and inventory of items
  * Checkout: Calculate total price of all bought items, including discounts, taxes, etc, and handling payment
+ * Keep everything in basis points to avoid floating operations
  *
- * Bonus:
- * Managing different checkouts (self, <=10 items, regular)
- * Modeling Customers and directing them to fastest checkout
  */
 
-// Traditionally, every item in grocery store is uniquely identified by an SKU
-
-// class SKUManager {
-// public:
-//   static SKUManager& getInstance() {
-//     static SKUManager instance;
-//     return instance;
-//   }
-// private:
-//   int sku = 0;
-//   SKUManager() = default;
-//   ~SKUManager() = default;
-//   SKUManager(const SKUManager&) = delete;
-//   SKUManager& operator=(const SKUManager&) = delete;
-// };
+/*
+ * Areas for improvement:
+ *
+ * Globad productMap, tight coupling with checkoutLine: should instead create a bridge between them, and consider having an interface to allow changes to productMap
+ * Probably want a ricker pricing engine and interface if more complex deals arise
+ * Units aren't used at all
+ *
+ * Areas for extension:
+ *
+ * Concurrency and different types of checkouts
+ * Modeling Customers and directing them to fastest checkout
+ * Managing inventory
+ * Error handling
+ */
 
 enum class Unit {
   Piece,
@@ -69,7 +66,7 @@ class BOGOPricingStrategy : public PricingStrategy {
 public:
   BOGOPricingStrategy(Cents price) : PricingStrategy(price) {}
   Cents calculatePrice(int amount) {
-    return (price + 1) / 2 * amount;
+    return (amount + 1) / 2 * price;
   }
 };
 
@@ -145,8 +142,8 @@ public:
       total += product.pricingStrategy->calculatePrice(amount);
       cout<<"scanned "<<product.name<<": "<<total<<endl;
     }
-    return taxStrategy->calculateTotal(total);
     cartQueue.pop();
+    return taxStrategy->calculateTotal(total);
   }
 };
 
@@ -154,7 +151,7 @@ public:
 int main () {
   ShoppingCart cart;
   checkoutLine checkout(make_unique<DefaultTaxStrategy>());
-  cart.addProduct(1, 150); // 150 kg
+  cart.addProduct(1, 150); // 1.50 kg
   cart.addProduct(2, 1);   // 1 bag
   cart.addProduct(3, 4);   // 4 bags
   checkout.addCart(std::move(cart));
