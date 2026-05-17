@@ -1,0 +1,69 @@
+Fundamental terms (minimal)
+
+Ingest: receive updates from an upstream feed (quotes/trades).
+Symbol: instrument identifier (e.g., AAPL).
+Snapshot: the latest known state per symbol at the moment a client subscribes.
+Delta: a new update after subscription (streamed to clients).
+Coalescing: if many updates arrive quickly, you send only the latest one (per symbol) instead of all intermediate ones.
+Backpressure: what you do when a client is too slow (you bound memory, drop/coalesce, or disconnect).
+
+Very high-level pseudocode (system behavior)
+
+Data structures (conceptual)
+
+last_state[symbol] = latest known quote/trade for that symbol
+subscribers[symbol] = set/list of clients currently subscribed to that symbol
+pending[client][symbol] = “latest update waiting to be sent” (coalescing buffer)
+MAX_PENDING_PER_CLIENT = memory bound for slow clients
+
+Structure of the system: updates go in, latest state updates, clients are registered per symbol, and a per-client coalescing buffer prevents slow consumers from blowing up memory.
+
+*Ingest path*
+on_update(symbol, update):
+  if update is stale/duplicate (by seq): return
+
+  last_state[symbol] = apply(update)
+
+  for each client in subscribers[symbol]:
+    pending[client][symbol] = merge_latest(pending[client][symbol], update)   // coalesce
+    if pending[client] too large:
+      disconnect(client)   // backpressure policy
+    else:
+      signal_sender(client) // tell client-sender there is work
+
+*Subscribe path*
+subscribe(client, symbol_list):
+  for each symbol in symbol_list:
+    add client to subscribers[symbol]
+
+  snapshot = {}
+  for each symbol in symbol_list:
+    if last_state[symbol] exists:
+      snapshot[symbol] = last_state[symbol]
+
+  send(client, snapshot)   // one-time initial snapshot
+
+*Unsubscribe path*
+unsubscribe(client, symbol_list or ALL):
+  remove client from subscribers[...] accordingly
+  clear pending[client] for those symbols
+
+Sending loop (conceptual; could be a thread, event loop, or async task)
+k
+
+client_sender_loop(client):
+  while client is connected:
+    wait until signaled or timeout
+
+    batch = pending[client]
+    pending[client].clear()
+
+    send(client, batch)  // stream deltas (often batched)
+
+*Disconnect / cleanup*
+disconnect(client):
+  mark client disconnected
+  remove client from all subscribers sets (or lazily clean up)
+  clear pending[client]
+  notify client (optional)
+

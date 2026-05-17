@@ -1,0 +1,133 @@
+BEFORE internship:
+Best use of time:
+
+Build RAII wrappers for OS resources
+Fd, Socket, Epoll, MMapRegion
+Focus: ownership, lifetime, move-only types, destructor behavior, exception safety.
+Build a nonblocking TCP server
+Start blocking, then poll, then optionally epoll.
+Add length-prefixed messages, partial read/write handling, buffers, disconnect handling, and backpressure.
+Focus: real systems/networking practice.
+Reimplement one core C++ abstraction
+Best choices: optional<T> or vector<T>.
+Focus: object lifetime, placement new, explicit destruction, reallocation, move/copy behavior, exception safety.
+Do explicit code review drills
+For each project, write invariants:
+What does this object own?
+When is it valid?
+What happens on move?
+What happens on failure?
+Can the API be misused?
+Use sanitizers and tests
+Use ASan/UBSan routinely.
+Use TSan for concurrent code.
+Fuzz parsers/protocol handlers.
+
+Recommended minimum prep stack:
+
+1. RAII fd/socket wrappers
+2. Nonblocking length-prefixed TCP server
+3. optional<T> or vector<T>
+4. Tests + sanitizers + short design notes
+
+The goal is not to know more C++ facts. The goal is to show that you can design simple, safe, modern C++ components with clear ownership, lifetime, and resource-management behavior.
+
+
+
+
+
+
+
+
+
+
+Implement std::function: by zen is ngmi on quants-n-traders
+
+#include <memory>
+#include <utility>
+#include <stdexcept>
+
+template <typename>
+class Function;
+
+template <typename R, typename... Args>
+class Function<R(Args...)> {
+    struct CallableBase {
+        virtual ~CallableBase() = default;
+        virtual R invoke(Args... args) = 0;
+        virtual std::unique_ptr<CallableBase> clone() const = 0;
+    };
+
+    template <typename F>
+    struct Callable : CallableBase {
+        F func;
+
+        Callable(F f) : func(std::move(f)) {}
+
+        R invoke(Args... args) override {
+            return func(std::forward<Args>(args)...);
+        }
+
+        std::unique_ptr<CallableBase> clone() const override {
+            return std::make_unique<Callable<F>>(func);
+        }
+    };
+
+    std::unique_ptr<CallableBase> callable_;
+
+public:
+    Function() noexcept = default;
+    Function(std::nullptr_t) noexcept : callable_(nullptr) {}
+
+    template <typename F,
+              typename = std::enable_if_t<!std::is_same_v<std::decay_t<F>, Function>>>
+    Function(F&& f)
+        : callable_(std::make_unique<Callable<std::decay_t<F>>>(std::forward<F>(f))) {}
+
+    Function(const Function& other)
+        : callable_(other.callable_ ? other.callable_->clone() : nullptr) {}
+
+    Function& operator=(const Function& other) {
+        if (this != &other)
+            callable_ = other.callable_ ? other.callable_->clone() : nullptr;
+        return *this;
+    }
+
+    Function(Function&&) noexcept = default;
+    Function& operator=(Function&&) noexcept = default;
+
+    Function& operator=(std::nullptr_t) noexcept {
+        callable_.reset();
+        return *this;
+    }
+
+    R operator()(Args... args) const {
+        if (!callable_)
+            throw std::bad_function_call();
+        return callable_->invoke(std::forward<Args>(args)...);
+    }
+
+    explicit operator bool() const noexcept {
+        return callable_ != nullptr;
+    }
+};
+
+Yea I got you 
+I heard the topics were p straight forward the questions I saw were on like 
+
+ABA problem variants and non-hazard-pointer solutions
+Lock-free memory reclamation (epoch, quiescent state, RCU)
+
+Template instantiation depth pathologies
+SFINAE failure modes
+Concepts vs SFINAE resolution differences
+
+
+Cache-oblivious algorithms
+External memory models
+Online vs offline algorithm tradeoffs
+Competitive analysis
+Amortized analysis via potential functions
+
+Check out WhiteBox (open, general getcracked?) problems
+
