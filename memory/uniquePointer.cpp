@@ -61,16 +61,18 @@ public:
     p = nullptr;
     return copy;
   }
-  
-  // Sort of like the copy constructor
+
   void reset(T* np) {
     if(p) d(p);
     p = np;
   }
 
-  // Operators to access. Don't forget bool!
+
   T& operator*() const { return *p; }
+
+  // operator-> is special overload: think of it as providing the pointer that the "true" -> should act on
   T* operator->() const { return p; }
+
   operator bool() const { return p != nullptr; }
 };
 

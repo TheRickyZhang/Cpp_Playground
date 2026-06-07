@@ -1,18 +1,19 @@
-// Write your solution here
-// C++20 for C++
-// /////////////////////////////////////////////////////////////////////////
-// If C++: Your code is automatically compiled with a precompiled header. //
-// 99% of includes / packages are already added for you.                  //
-// You do NOT need to add your own includes here.                         //
-// /////////////////////////////////////////////////////////////////////////
-
 #include <atomic>
 #include <bits/stdc++.h>
-#include <cstddef>
 using namespace std;
 
+/*
+* A shared pointer basically manages the underlying lifetime of a pointer so we can share the same resource
+* A simplified version might might store the pointer in the control block, but we should be careful that the point is to have multiple independent owners, NOT avoid repetitive pointer storing.
+* Note it is possible to have aliasing. For instance, if we do: struct Foo { int x; }, we can set:
+* p = shared_ptr<Foo>(1);
+* q = shared_ptr<int>(p, &p.x); -> q contributes to p's pointer lifetime, but will return the corresponding int* instead of Foo*
+* Thus an ideal design would store T* per object, not in the control block
+* First, implement functions assuming we have increment() and decrement(). Remember to prefer incrementing before decrementing to avoid lifetime issues
+* Then implement increment / decrement. For thread safety, 
+*
+*/
 
-namespace getcracked {
 struct control_block {
   std::atomic<int> count = 1;
   std::atomic<int> weakCount = 1;
@@ -29,17 +30,17 @@ class shared_ptr {
   }
 
   // Be careful - you need pointer references here to assign the actual address to nullptr
-  void decrement(control_block*& cb) {
+  void decrement() {
     if(!cb) return;
-    // We want to guarantee we see all writes beforehand for accurate destruction
-    // The default sequential consistency is fine for this (slowest / entirely sequential)
-    if(cb->count.fetch_sub(1, std::memory_order_seq_cst) == 1) {
+    // 
+    if(cb->count.fetch_sub(1, std::memory_order_acq_rel) == 1) {
       delete p;
       delete cb;
     }
     p = nullptr;
     cb = nullptr;
   }
+
 public:
   shared_ptr() = default;
   shared_ptr(T *pointer) : p(pointer) { 
@@ -103,4 +104,3 @@ public:
     std::swap(cb, other.cb);
   }
 };
-} // namespace getcracked

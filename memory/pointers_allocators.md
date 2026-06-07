@@ -2,6 +2,19 @@
 - Subtracting pointers that are not in the same array / allocation is undefined behavior
 - Instead, a `reinterpret_cast<uintptr_t>(buf)` is the canonical way to compare raw addresses, and thus perform all sorts of pointer checks. This mostly appears in very low-level code.
 
+## Pointers vs Raw Arrays
+While both refer to starting memory address, and a raw array can decay into a pointer, an array contains the elements, while a pointer contains only an address.
+
+The most obvious different manifests in that arrays are inlined storage, while pointers are not, that is:
+```cpp
+struct foo {
+  int[4] a; // is owned by foo, part of memory layout
+};
+struct bar {
+  int* b; // points outside bar, need to have been allocated elsewhere
+}
+```
+
 # Smart Pointers
 - unique_ptr -> owns the T\*, manages lifetime. You can assign multiple to same, but would be bad because of double freeing.
 - shared_ptr -> owns the T\*, reference count, destroys object when total count reaches 0.

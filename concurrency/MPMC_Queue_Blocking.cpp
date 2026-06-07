@@ -20,7 +20,7 @@ class MPMCBlockingQueue {
 
 public:
   MPMCBlockingQueue(int n) : cap(n) {
-    a = ::operator new(n * sizeof(T)); 
+    a = static_cast<T*>(::operator new(n * sizeof(T))); 
   }
   ~MPMCBlockingQueue() {
     {
@@ -67,8 +67,6 @@ public:
     return true;
   }
 };
-
-
 
 
 
