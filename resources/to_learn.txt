@@ -30,16 +30,6 @@ Recommended minimum prep stack:
 3. optional<T> or vector<T>
 4. Tests + sanitizers + short design notes
 
-The goal is not to know more C++ facts. The goal is to show that you can design simple, safe, modern C++ components with clear ownership, lifetime, and resource-management behavior.
-
-
-
-
-
-
-
-
-
 
 Implement std::function: by zen is ngmi on quants-n-traders
 

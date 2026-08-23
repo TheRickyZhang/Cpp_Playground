@@ -7,5 +7,3 @@ TCP: Transmission Control Protocol (Transport, L4)
 
 UDP: User Datagram Protocol (Transport, L4)
 - Lightweight, no guarantee
-
-

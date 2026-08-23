@@ -5,6 +5,23 @@ using Id = size_t;
 using Price = long;
 using Quantity = int;
 
+/* IMC interview constraints:
+* Match first based on price. 
+* Within price level, allocate pro-rata rounding down, ie every order matching volume is (vol / total vol) * match vol, rounded down.
+* Then, distribute all remaining volume by volume-time priority.
+* 
+*
+* Design: represent bids and asks as:
+* map<int, vector<Order>>
+* 
+* We can also consider accumulating in PriceLevel, 
+*
+* On first pass, sort by 
+* 
+* 
+*/
+
+
 /* Follow ups
  *
  * In a real trading system, to optimize while still keeping requirements of price order, FIFO creation order, and fast deletion by ID, you could use a pool of Orders, each with their own intrusive next*, prev* pointers to minimize std::list<> overhead

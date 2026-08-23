@@ -26,3 +26,13 @@ Because the former allows compiler to choose better, type-specific swap implemen
 - Minimize shared mutable state
 - Use RAII for locks
 - Use condition variables or atomics
+
+
+- Generally agreed that unsigned integers to have non-negative invariant is a bad idea. Overflow behavior is defined so can't easily be caught.
+- Disagreement whether namespaces should be mirrored in directory structure.
+Yes: predictable organization. Supported by Google
+No: logical grouping of namespaces != physical grouping of directories. Supported by Boost.
+
+- `Type` as a variable name suffix should be used for things that are actually types, like typedef / template params.
+- Otherwise `Kind` should be used for discriminator tags, like an enum member.
+
