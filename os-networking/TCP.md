@@ -1,3 +1,5 @@
+TCP/IP model layers (ATN DP): application, transport, network, data link, physical.
+
 IP: Internet Protocol (Networking layer L3)
 - Routes packets from source to destination using IP addresses
 - No guarantee for packet delivery

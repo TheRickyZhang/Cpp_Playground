@@ -179,6 +179,8 @@ Example: see ./typeErasureShapeImplementation.cpp
 - Can also be adapted to non-owning version, which does pull back into reference semantics
 - (Too complex, maybe read later)
 
+Practical variant, type-erased destruction: store a destructor as function pointer + pointer to the object, delegating destruction to a callable wrapper that knows the concrete type to delete. Costs only one indirect call.
+
 = Decorator
 When you want to flexibly combine multiple different strategies to apply to something (ex pricing logic)
 - Indicated by is-a and has-a, since a decorator parent class will modify instance in some way

@@ -1,4 +1,5 @@
-Know the terminology: cache coherence is a fundamental mechanism that ensures all processors have the same view of memory.
+Know the terminology: cache coherence is a fundamental mechanism that ensures all processors have the same view of memory (all cores agree on the value of a cache line).
+- MESI is the standard protocol.
 
 False sharing is the large performance penalty that cache coherence causes when different threads modify variables independently on the same cache line.
 

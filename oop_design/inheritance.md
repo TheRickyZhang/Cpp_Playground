@@ -1,3 +1,5 @@
+A vtable is a per-class table of function pointers that supports virtual functions; each instance holds a pointer to it, and dynamic dispatch selects the entry to call at runtime.
+
 How vtables work for polymorphic inheritance:
 If we have abstract class (virtual), we put vtable pointer as the first 8 bytes
 vtable contains:

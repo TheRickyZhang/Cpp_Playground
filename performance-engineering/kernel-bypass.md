@@ -27,18 +27,57 @@ Overall, io_uring generally better, immediately doing some action on data when i
 
 
 # Normal Path (Remember this!)
-- NIC gets data as ethernet frames
-- They are DMAed into corresponding RX descriptor address in the RX queue
-- NIC raises hard IRQ
-- CPU stops code execution and runs the NIC driver's interrupt handler in kernel mode, calling napi_schedule
-- CPU executes NAPI poll function in softirq context, processing entire RX queue until empty or budget exceeded
-- Within the poll, convert RX buffer to kernel's packet representation, process through network stack, determines destination socket, and push data to that socket
-- Wakes up threads that call epoll_wait() or recv() corresponding to that socket
-
 Bytes go from:
 - NIC -> DMA to kernel -> maybe copy to userspace
 
+NIC gets Ethernet frame
+        ↓
+NIC selects an RX queue (RSS / hardware steering)
+        ↓
+NIC reads the next RX descriptor, which includes buffer address
+        ↓
+NIC DMAs packet into that buffer and marks descriptor complete
+        ↓
+NIC raises an IRQ                 [often coalesced, not per packet]
+        ↓
+CPU runs hard IRQ handler
+    masks/defer interrupts
+    schedules NAPI
+        ↓
+NET_RX_SOFTIRQ
+        ↓
+driver's NAPI poll() the RX queue (until no more to process, or reach limit)
+    process completed descriptors
+    create/manage skb representation
+    possibly XDP / GRO / checksum offload handling
+    replenish RX descriptors with new buffers
+        ↓
+Linux network stack
+    Ethernet → IP → UDP/TCP → socket lookup
+        ↓
+socket receive queue
+        ↓
+wake blocked recv()/epoll_wait()
+        ↓
+typically copy payload kernel → userspace with recv()
+
+# Kernel Bypass Path
+NIC
+ ↓
+RX queue
+ ↓
+descriptor → userspace-accessible DMA buffer
+ ↓
+userspace CPU polls descriptor ring (NOT the buffer)
+ ↓
+application reads packet directly
+ ↓
+application handles required protocol logic
 Note that most things happen in kernel: when raising hard irq, the CPU stops and 
+
+## Types of Kernel Bypass
+- Raw userspace NIC access for market data (Solarflare ef_vi)
+- Userspace TCP/IP stack for order entry, exposes as TCP sockets (TCPDirect)
 
 Normally, from NIC to application, the path is:
 
@@ -64,7 +103,4 @@ Goes to sock{}.
 
 Now that we have content in the socket, recv() or epoll_wait() successfully wake the corresponding process.
 Normally, kernel will copy the packet to userspace, but there are also options to DMA for zero-copy as well, while keeping TCP handling.
-
-# How Kernel Bypass improves
-Basically, cuts down everything between NIC receives packet -> code sees packet.
 

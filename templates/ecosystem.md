@@ -2,6 +2,12 @@ Ecosystem: Landscape knowledge of what common template patterns / built-in conce
 
 
 # Templates
+Usage of `...` (can mean different things):
+- `typename... name` -> you repeat the typename for everything in the pack.
+- `name...` -> to use a pack, you must expand it so it is not ambiguous.
+
+SFINAE: a bit ugly, but allows deactivating template code for types that don't match.
+https://www.fluentcpp.com/2018/05/15/make-sfinae-pretty-1-what-value-sfinae-brings-to-code/
 
 # Concepts
 

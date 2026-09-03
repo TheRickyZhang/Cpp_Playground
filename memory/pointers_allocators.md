@@ -1,6 +1,7 @@
 # Pointers
 - Subtracting pointers that are not in the same array / allocation is undefined behavior
 - Instead, a `reinterpret_cast<uintptr_t>(buf)` is the canonical way to compare raw addresses, and thus perform all sorts of pointer checks. This mostly appears in very low-level code.
+- `char\*` and `std::byte\*` are basically the same; only prefer `char\*` when you need the flexibility of looking inside.
 
 ## Pointers vs Raw Arrays
 While both refer to starting memory address, and a raw array can decay into a pointer, an array contains the elements, while a pointer contains only an address.
@@ -40,8 +41,12 @@ destroy_at(a+i)                ->  AT::destroy(alloc, a+i);
 To create a custom allocator class, without traits, only need to implement constructor / copy constructor, destructor, allocate() and deallocate();
 Use std::align for alignment. Has fairly tricky signature!
 
+## Placement new
+Plain `new T(...)` allocates + constructs (usual form); placement new `new (ptr) T(...)` only constructs at existing memory.
+
 ## Regarding std::launder
 The fundamental idea behind laundering is that C++ does not model objects by their addresses, but by their lifetimes. So we want to launder when the compiler may have stale assumptions based on the previous lifetime.
+I.e. memory laundering: prevents the compiler from tracing where the memory came from, so stale assumptions (e.g. about const members) can't leak through a reinterpret_cast or in-place reconstruction.
 
 If we do something like:
 ```cpp

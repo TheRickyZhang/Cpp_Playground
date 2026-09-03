@@ -1,30 +1,8 @@
 # Random
-Usage of ... (Can mean different things):
-- typename... name -> You repeat the typename for everything in pack. 
-- name... -> to use a pack,you must expand so it is not ambiguous.
-
 How are exceptions zero-cost?
 - We still pay the cost of whatever check we do to emit the exception, but in addition, compiler emits exception tables that trigger when we do throw.
 
-SFINAE: A bit ugly, but allows for deactivating template code for types that don't match.
-https://www.fluentcpp.com/2018/05/15/make-sfinae-pretty-1-what-value-sfinae-brings-to-code/
 - It is standard API to put public: first, then private: in a class, but when just doing a quick interview implementation, can but private members at the top to make interface / invariants more visible.
-- Placement new can allocate + construct (usual form) or just construct at existing memory with the form: = (ptr) new(...)k
-- char\* and std::byte\* are basically the same, only prefer char\* when you need flexibility of looking inside
-- std::launder does memory laundering; that is, preventing compiler from tracing where memory came from, thus allowing you to rewrite const variables or reinterpret_cast.
-
-- nullopt_t is just the type for nullopt, ie if you only want to accept that.
-
-TCP/IP Model: ATN DP, application, transport, network, data, physical.
-
-Cache Coherence: how all cores can agree on value of cache line. 
-- MESI is standard protocol.
-
-A vtable is what is used to support virtual functions; create table of function pointers, and each instance has pointer to table entry; uses dynamic dispatch to figure out what to call at runtime
-
-Generally, "store" destructors using type-erased destruction, so function pointer + pointer to object to destroy.
-- Delegate destroying to a callable (wrapper) that knows what type to delete on.
-- Only costs one indirect call
 
 == Thinking about Restrictions
 Why can't you define nested functions?
